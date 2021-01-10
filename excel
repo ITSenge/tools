@@ -1,0 +1,34 @@
+class ExcelTool:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def read_excel(filepath, index=0) -> dict:
+        """
+        读Excel数据
+        :param filepath: file path
+        :param index:  sheet index
+        """
+        with xlrd.open_workbook(filepath) as f:
+            if index not in range(f.nsheets):
+                return {}
+            sheet = f.sheet_by_index(index)
+
+        return {
+            "sheet_name": sheet.name,
+            "rows": [sheet.row_values(i) for i in range(sheet.nrows)]
+        }
+
+    @staticmethod
+    def write_excel(filename, data: dict):
+        # 加入时间, 防止同名文件
+        filename = datetime.datetime.now().strftime("%Y%m%d%H%M%S") + filename + ".xlsx"
+        filepath = os.path.join(settings.TEMP_FILE_EXPORT_DIR, filename)
+        workbook = xlsxwriter.Workbook(filepath)
+        for sheet in data:
+            worksheet = workbook.add_worksheet(sheet.get("sheet_name"))
+            for irow, row in enumerate(sheet.get("rows", [])):
+                worksheet.write_row(irow, 0, row)
+        workbook.close()
+        return filepath
+
