@@ -1,24 +1,22 @@
-from ruler.models import Alarm
 from sec_server.DRF.serializers import DisplayModelSerializer
-
-
-class ExportSerializer(DisplayModelSerializer):
-    class Meta:
-        model = Alarm
-        fields = "__all__"
 
 
 class ModelExporter:
 
-    def __init__(self, model, serializer, fields=None, exclude_fields=None):
-        """
-        :param model: models.Model
-        :param serializer: ExportSerializer()
-        """
+    def __init__(self, model, fields=None, exclude_fields=None):
         self.model = model
-        self.serializer = serializer
         self.fields = fields or []
         self.exclude_fields = exclude_fields or []
+        self.serializer = None
+        self._init_serializer()
+
+    def _init_serializer(self):
+        class ExportSerializer(DisplayModelSerializer):
+            class Meta:
+                model = self.model
+                fields = "__all__"
+
+        self.serializer = ExportSerializer
 
     def get_model_data(self):
         return self.serializer(instance=self.model.objects.all(), many=True).data
