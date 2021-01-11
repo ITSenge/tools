@@ -1,0 +1,46 @@
+from ruler.models import Alarm
+from sec_server.DRF.serializers import DisplayModelSerializer
+
+
+class ExportSerializer(DisplayModelSerializer):
+    class Meta:
+        model = Alarm
+        fields = "__all__"
+
+
+class ModelExporter:
+
+    def __init__(self, model, serializer, fields=None, exclude_fields=None):
+        """
+        :param model: models.Model
+        :param serializer: ExportSerializer()
+        """
+        self.model = model
+        self.serializer = serializer
+        self.fields = fields or []
+        self.exclude_fields = exclude_fields or []
+
+    def get_model_data(self):
+        return self.serializer(instance=self.model.objects.all(), many=True).data
+
+    def get_header_map(self):
+        header = {}
+        for i in self.model._meta.fields:
+            attname = i.attname
+            if attname not in self.exclude_fields:
+                if self.fields and attname not in self.fields:
+                    continue
+                header[attname] = i.verbose_name
+                if i.choices:
+                    header["get_" + attname + "_display"] = i.verbose_name
+        return header
+
+    def get_rows(self):
+        headers = self.get_header_map()
+        rows = [
+            list(headers.values())
+        ]
+        for data in self.get_model_data():
+            rows.append([data.get(k, "") for k in headers])
+
+        return rows
