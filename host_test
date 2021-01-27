@@ -1,0 +1,38 @@
+import time
+import urllib.request
+
+interval = 60 * 1  # 秒
+sec_alarm_url = "/portal/printer/"
+hosts = [
+    "",
+]
+
+
+def request(url):
+    try:
+        return urllib.request.urlopen(url).getcode()
+    except:
+        return 500
+
+
+def is200(host, ssl=False):
+    scheme = "https" if ssl else "http"
+    url = "".join([scheme, "://", host])
+    return request(url) == 200
+
+
+def check():
+    errors = [x for x in hosts if not is200(x)]
+    if not errors:
+        return
+    request(sec_alarm_url + "?host=" + "".join(errors))
+
+
+def run():
+    while True:
+        check()
+        time.sleep(interval)
+
+
+if __name__ == '__main__':
+    run()
